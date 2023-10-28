@@ -14,17 +14,16 @@ using namespace Vamp;
 using namespace Vamp::HostExt;
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_example_chordino_MainActivity_initializePlugin(
+Java_com_recifra_chordino_Extractor_initializePlugin(
         JNIEnv* env,
         jobject /* this */,
-        jfloat samplerate
+        jfloat samplerate,
+        jsize blocksize
         ) {
     auto *chordino = new Chordino(samplerate);
     auto *ia = new PluginInputDomainAdapter(chordino);
     ia->setProcessTimestampMethod(PluginInputDomainAdapter::ShiftData);
     auto *adapter = new PluginBufferingAdapter(ia);
-
-    size_t blocksize = 4096;//adapter->getPreferredBlockSize();
 
     // Plugin requires 1 channel (we will mix after)
     if (!adapter->initialise(1, blocksize, blocksize)) {
@@ -36,7 +35,7 @@ Java_com_example_chordino_MainActivity_initializePlugin(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_chordino_MainActivity_releasePlugin(
+Java_com_recifra_chordino_Extractor_releasePlugin(
         JNIEnv* /* env */,
         jobject /* this */,
         jlong lpAdapter
@@ -45,18 +44,38 @@ Java_com_example_chordino_MainActivity_releasePlugin(
     delete adapter;
 }
 
-extern "C" JNIEXPORT jobjectArray JNICALL
-Java_com_example_chordino_MainActivity_processBuffer(JNIEnv* env,
-                                                     jobject /* this */,
-                                                     jlong lpAdapter,
-                                                     jfloatArray mixbufArray,
-                                                     jlong milliseconds
-                                                     ) {
+extern "C" JNIEXPORT void JNICALL
+Java_com_recifra_chordino_Extractor_resetProcess(JNIEnv* env,
+                                                 jobject /* this */,
+                                                 jlong lpAdapter
+) {
+    auto *adapter = (PluginBufferingAdapter *) lpAdapter;
+    adapter->reset();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_recifra_chordino_Extractor_processBuffer(JNIEnv* env,
+                                                  jobject /* this */,
+                                                  jlong lpAdapter,
+                                                  jfloatArray mixbufArray,
+                                                  jlong milliseconds
+) {
     jfloat *mixbuf = env->GetFloatArrayElements(mixbufArray, nullptr);
     auto *adapter = (PluginBufferingAdapter *) lpAdapter;
-    Plugin::FeatureList chordFeatures;
-    Plugin::FeatureSet fs;
 
+    RealTime timestamp = RealTime::fromMilliseconds((int) milliseconds);
+
+    // feed to plugin: can just take address of buffer, as only one channel
+    adapter->process(&mixbuf, timestamp);
+    env->ReleaseFloatArrayElements(mixbufArray, mixbuf, 0);
+}
+
+extern "C" JNIEXPORT jobjectArray JNICALL
+Java_com_recifra_chordino_Extractor_getResult(JNIEnv* env,
+                                                     jobject /* this */,
+                                                     jlong lpAdapter
+                                                     ) {
+    auto *adapter = (PluginBufferingAdapter *) lpAdapter;
     int chordFeatureNo = -1;
     Plugin::OutputList outputs = adapter->getOutputDescriptors();
     for (int i = 0; i < int(outputs.size()); ++i)
@@ -73,30 +92,12 @@ Java_com_example_chordino_MainActivity_processBuffer(JNIEnv* env,
         env->ThrowNew(jcls, "Failed to identify chords output");
         return nullptr;
     }
-    RealTime timestamp = RealTime::fromMilliseconds((int) milliseconds);
-
-    // feed to plugin: can just take address of buffer, as only one channel
-    fs = adapter->process(&mixbuf, timestamp);
-
-    chordFeatures.insert(chordFeatures.end(),
-                         fs[chordFeatureNo].begin(),
-                         fs[chordFeatureNo].end());
-
-
     // features at end of processing (actually Chordino does all its work here)
-    fs = adapter->getRemainingFeatures();
-    env->ReleaseFloatArrayElements(mixbufArray, mixbuf, 0);
-
-    // chord output is output index 0
-    chordFeatures.insert(chordFeatures.end(),
-                         fs[chordFeatureNo].begin(),
-                         fs[chordFeatureNo].end());
+    Plugin::FeatureSet fs = adapter->getRemainingFeatures();
+    Plugin::FeatureList& chordFeatures = fs[chordFeatureNo];
     jobjectArray result = env->NewObjectArray((int) chordFeatures.size(),
                                               env->FindClass("android/util/Pair"),
                                               nullptr);
-    if (chordFeatures.size() > 2) {
-        adapter->reset();
-    }
     for (int i = 0; i < (int)chordFeatures.size(); ++i)
     {
         jclass pairClass = env->FindClass("android/util/Pair");
@@ -107,7 +108,7 @@ Java_com_example_chordino_MainActivity_processBuffer(JNIEnv* env,
         jobject timestampObj = env->NewObject(
                 floatClass,
                 env->GetMethodID(floatClass, "<init>", "(F)V"),
-                static_cast<jfloat>((float) chordFeatures[i].timestamp.msec() / 1000.f)
+                static_cast<jfloat>(chordFeatures[i].timestamp.sec + (float) chordFeatures[i].timestamp.msec() / 1000.f)
                 );
         jobject pair = env->NewObject(pairClass, pairConstructor, title, timestampObj);
         env->SetObjectArrayElement(result, i, pair);
