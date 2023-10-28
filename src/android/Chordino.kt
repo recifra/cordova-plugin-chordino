@@ -76,15 +76,15 @@ class Chordino : CordovaPlugin() {
             extractor.initialize(samplerate.toFloat(), blocksize)
 
             audioCapture?.run({ buffer: FloatArray ->
-                extractor?.process(buffer, System.currentTimeMillis() - startTime)
-                val result = extractor?.result()
+                extractor.process(buffer, System.currentTimeMillis() - startTime)
+                val result = extractor.result()
                 if (result != null) {
                     if (result.size <= 2 && System.currentTimeMillis() - lastChangeTime > 250) {
                         lastChangeTime = System.currentTimeMillis()
                         // lastChord = ""
                     }
                     if (result.size > 2) {
-                        extractor?.reset()
+                        extractor.reset()
                         lastChangeTime = System.currentTimeMillis()
                     }
                     if (result.size > 2 && lastChord != result[1].first) {
