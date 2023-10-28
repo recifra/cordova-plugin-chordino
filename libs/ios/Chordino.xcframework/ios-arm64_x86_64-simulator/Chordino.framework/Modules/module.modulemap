@@ -1,0 +1,6 @@
+framework module Chordino {
+  umbrella header "Chordino.h"
+  export *
+
+  module * { export * }
+}

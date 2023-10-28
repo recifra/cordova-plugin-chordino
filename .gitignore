@@ -1,1 +1,7 @@
 src/android/.gradle/*
+.DS_Store
+src/ios/framework/Chordino/Chordino/nnls-chroma/
+src/ios/framework/Chordino/Chordino/vamp-plugin-sdk/
+src/ios/framework/Chordino/Chordino.xcodeproj/project.xcworkspace/
+src/ios/framework/Chordino/Chordino.xcodeproj/xcuserdata/
+src/ios/framework/Chordino/build/

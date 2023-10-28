@@ -45,6 +45,6 @@
 
         <framework src="CoreAudio.framework" weak="true"/>
         <framework src="AudioToolbox.framework" weak="true"/>
-        <framework src="libs/ios/chordino/Chordino.xcframework" custom="true" embed="true" />
+        <framework src="libs/ios/Chordino.xcframework" custom="true" embed="true" />
     </platform>
 </plugin>
