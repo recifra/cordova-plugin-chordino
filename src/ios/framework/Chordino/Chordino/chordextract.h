@@ -25,7 +25,7 @@ public:
     ~ChordExtract();
     void initialize(size_t blocksize);
     void process(float* bufferArray, long milliseconds);
-    std::vector<chord_info_t> getResult();
+    void getResult(std::vector<chord_info_t> &result);
     void reset();
 };
 

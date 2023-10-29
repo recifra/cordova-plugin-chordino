@@ -41,7 +41,7 @@ void ChordExtract::process(float* bufferArray, long milliseconds)
     this->adapter->process(&bufferArray, timestamp);
 }
 
-std::vector<chord_info_t> ChordExtract::getResult()
+void ChordExtract::getResult(std::vector<chord_info_t> &result)
 {
     int chordFeatureNo = -1;
     Plugin::OutputList outputs = this->adapter->getOutputDescriptors();
@@ -60,13 +60,11 @@ std::vector<chord_info_t> ChordExtract::getResult()
     // features at end of processing (actually Chordino does all its work here)
     Plugin::FeatureSet fs = this->adapter->getRemainingFeatures();
     Plugin::FeatureList& chordFeatures = fs[chordFeatureNo];
-    vector<chord_info_t> result = vector<chord_info_t>((int) chordFeatures.size());
     for (int i = 0; i < (int)chordFeatures.size(); ++i)
     {
-        result[i].chord = chordFeatures[i].label;
-        result[i].time = chordFeatures[i].timestamp.msec() / 1000.f;
+        chord_info_t item = { chordFeatures[i].label, chordFeatures[i].timestamp.msec() / 1000.f };
+        result.push_back(item);
     }
-    return result;
 }
 
 void ChordExtract::reset()

@@ -36,7 +36,7 @@
     return self;
 }
 
--(void)initialize:(size_t)blocksize {
+-(void)prepare:(size_t)blocksize {
     self.extractor->initialize(blocksize);
 }
 
@@ -44,20 +44,24 @@
     self.extractor->process(bufferArray, milliseconds);
 }
 
-- (NSArray *)getResult {
-    std::vector<chord_info_t> list = self.extractor->getResult();
-    ChordItem* items[list.size()];
+- (NSMutableArray *)getResult {
+    std::vector<chord_info_t> list;
+    self.extractor->getResult(list);
+    NSMutableArray* result = [[NSMutableArray alloc] init];
     for (int i = 0; i < (int)list.size(); ++i)
     {
         NSString* chordString = [NSString stringWithUTF8String:list[i].chord.c_str()];
-        items[i] = [[ChordItem alloc] initWithChord:chordString time:list[i].time];
+        [result addObject:[[ChordItem alloc] initWithChord:chordString time:list[i].time]];
     }
-    NSArray* result = [[NSArray alloc] initWithObjects:items count:list.size()];
     return result;
 }
 
 -(void)reset {
     self.extractor->reset();
+}
+
+- (void)dealloc {
+    delete self.extractor;
 }
 
 @end

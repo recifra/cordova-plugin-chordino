@@ -23,8 +23,9 @@ FOUNDATION_EXPORT const unsigned char ChordinoVersionString[];
 
 @interface ChordinoWrapper : NSObject
 - (instancetype)initWithSamplerate:(float)samplerate;
-- (void)initialize:(size_t)blocksize;
+- (void)prepare:(size_t)blocksize;
 - (void)process:(float*)bufferArray milliseconds:(long)milliseconds;
-- (NSArray*)getResult;
+- (NSMutableArray*)getResult;
 - (void)reset;
+- (void)dealloc;
 @end
