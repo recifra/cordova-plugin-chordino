@@ -40,7 +40,6 @@
             <string>This app needs microphone access</string>
         </config-file>
         <source-file src="src/ios/Chordino.swift" />
-        <source-file src="src/ios/Extractor.swift" />
         <source-file src="src/ios/AudioCapture.swift" />
 
         <framework src="CoreAudio.framework" weak="true"/>
