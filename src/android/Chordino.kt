@@ -78,31 +78,28 @@ class Chordino : CordovaPlugin() {
             audioCapture?.run({ buffer: FloatArray ->
                 extractor.process(buffer, System.currentTimeMillis() - startTime)
                 val result = extractor.result()
-                if (result != null) {
-                    if (result.size <= 2 && System.currentTimeMillis() - lastChangeTime > 250) {
-                        lastChangeTime = System.currentTimeMillis()
-                        // lastChord = ""
-                    }
-                    if (result.size > 2) {
-                        extractor.reset()
-                        lastChangeTime = System.currentTimeMillis()
-                    }
-                    if (result.size > 2 && lastChord != result[1].first) {
-                        lastChord = result[1].first
-                        Log.d(
-                            "Chordino",
-                            "Chord: " + result[1].first + " | " + String.format(
-                                "%.03f",
-                                result[1].second
-                            )
+                if (result.size <= 2 && System.currentTimeMillis() - lastChangeTime > 250) {
+                    lastChangeTime = System.currentTimeMillis()
+                }
+                if (result.size > 2) {
+                    extractor.reset()
+                    lastChangeTime = System.currentTimeMillis()
+                }
+                if (result.size > 2 && lastChord != result[1].first) {
+                    lastChord = result[1].first
+                    Log.d(
+                        "Chordino",
+                        "Chord: " + result[1].first + " | " + String.format(
+                            "%.03f",
+                            result[1].second
                         )
-                        val message = JSONObject()
-                        message.put("chord", result[1].first)
-                        message.put("time", result[1].second)
-                        val pluginResult = PluginResult(PluginResult.Status.OK, message)
-                        pluginResult.keepCallback = true
-                        savedCallbackContext.sendPluginResult(pluginResult)
-                    }
+                    )
+                    val message = JSONObject()
+                    message.put("chord", result[1].first)
+                    message.put("time", result[1].second)
+                    val pluginResult = PluginResult(PluginResult.Status.OK, message)
+                    pluginResult.keepCallback = true
+                    savedCallbackContext.sendPluginResult(pluginResult)
                 }
             }, { error: String ->
                 Log.e("Chordino", error)
