@@ -34,6 +34,10 @@ class AudioCapture {
         var lastChord = ""
         mic.installTap(onBus: 0, bufferSize: UInt32(bufferLength), format: micFormat) { (buffer, when) in
             let sampleData = buffer.floatChannelData![0]
+            // gain to 12% only (reduce sensitivity)
+            for i in 0 ..< Int(buffer.frameLength) {
+                sampleData[i] *= Float(0.12)
+            }
             extractor!.process(sampleData, milliseconds: Int(self.getCurrentMillis() - startTime))
             let chordList = extractor!.getResult()
             if (chordList!.count <= 2 && self.getCurrentMillis() - lastChangeTime > 250) {

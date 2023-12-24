@@ -76,6 +76,8 @@ class Chordino : CordovaPlugin() {
             extractor.initialize(samplerate.toFloat(), blocksize)
 
             audioCapture?.run({ buffer: FloatArray ->
+                // gain to 12% only (reduce sensitivity)
+                buffer.forEachIndexed({ index: Int, value: Float -> buffer[index] = value * 0.12f })
                 extractor.process(buffer, System.currentTimeMillis() - startTime)
                 val result = extractor.result()
                 if (result.size <= 2 && System.currentTimeMillis() - lastChangeTime > 250) {
