@@ -20,6 +20,7 @@ class Chordino : CordovaPlugin() {
     private var audioCapture: AudioCapture? = null
     private var samplerate: Int = 0
     private var blocksize: Int = 0
+    private var sensitivity: Float = 0.12f
     private lateinit var savedCallbackContext: CallbackContext
 
     override fun execute(
@@ -34,6 +35,7 @@ class Chordino : CordovaPlugin() {
         if (action == "start") {
             samplerate = args.getInt(0)
             blocksize = args.getInt(1)
+            sensitivity = args.optDouble(2, 0.12).toFloat()
             savedCallbackContext = callbackContext
             audioCapture = AudioCapture(samplerate, blocksize)
             cordova.threadPool.execute {
@@ -47,6 +49,11 @@ class Chordino : CordovaPlugin() {
         }
         if (action == "stop") {
             stop()
+            callbackContext.success(1)
+            return true
+        }
+        if (action == "sensitivity") {
+            sensitivity = args.getDouble(0).toFloat()
             callbackContext.success(1)
             return true
         }
@@ -76,8 +83,7 @@ class Chordino : CordovaPlugin() {
             extractor.initialize(samplerate.toFloat(), blocksize)
 
             audioCapture?.run({ buffer: FloatArray ->
-                // gain to 12% only (reduce sensitivity)
-                buffer.forEachIndexed({ index: Int, value: Float -> buffer[index] = value * 0.12f })
+                buffer.forEachIndexed({ index: Int, value: Float -> buffer[index] = value * sensitivity })
                 extractor.process(buffer, System.currentTimeMillis() - startTime)
                 val result = extractor.result()
                 if (result.size <= 2 && System.currentTimeMillis() - lastChangeTime > 250) {

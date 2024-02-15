@@ -4,39 +4,53 @@ import Chordino
 class AudioCapture {
     private var sampleAudioBitRate: Int
     private var bufferLength: Int
-    private var audioEngine: AVAudioEngine!
-    private var mic: AVAudioInputNode!
+    public  var sensitivity: Float
+    private var audioEngine: AVAudioEngine?
+    private var mic: AVAudioInputNode?
     private var micTapped = false
 
-    init(sampleAudioBitRate: Int, bufferLength: Int) {
+    init(sampleAudioBitRate: Int, bufferLength: Int, sensitivity: Double) {
         self.sampleAudioBitRate = sampleAudioBitRate
         self.bufferLength = bufferLength
-        audioEngine = AVAudioEngine()
-        mic = audioEngine.inputNode
+        self.sensitivity = Float(sensitivity)
     }
 
     func stop() {
-        audioEngine.stop()
-        audioEngine.reset()
+        audioEngine?.stop()
+        audioEngine?.reset()
     }
 
     func run(closure: @escaping (String, Float) -> Void) {
         if micTapped {
-            mic.removeTap(onBus: 0)
+            mic?.removeTap(onBus: 0)
             micTapped = false
             return
         }
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: .mixWithOthers)
+            try audioSession.setActive(true)
+        } catch let error as NSError {
+            NSLog("AudioSession Error: %@", [error.localizedDescription])
+            return
+        }
+        audioEngine = AVAudioEngine()
+        mic = audioEngine?.inputNode
         let extractor = ChordinoWrapper(samplerate: Float(sampleAudioBitRate))
         extractor!.prepare(bufferLength)
-        let micFormat = mic.inputFormat(forBus: 0)
+        mic?.removeTap(onBus: 0)
+        let micFormat = mic?.inputFormat(forBus: 0)
+        if micFormat?.sampleRate == 0 {
+            NSLog("InputFormat zero sampleRate error")
+            return
+        }
         let startTime = getCurrentMillis()
         var lastChangeTime = getCurrentMillis()
         var lastChord = ""
-        mic.installTap(onBus: 0, bufferSize: UInt32(bufferLength), format: micFormat) { (buffer, when) in
+        mic?.installTap(onBus: 0, bufferSize: UInt32(bufferLength), format: micFormat) { (buffer, when) in
             let sampleData = buffer.floatChannelData![0]
-            // gain to 12% only (reduce sensitivity)
             for i in 0 ..< Int(buffer.frameLength) {
-                sampleData[i] *= Float(0.12)
+                sampleData[i] *= self.sensitivity
             }
             extractor!.process(sampleData, milliseconds: Int(self.getCurrentMillis() - startTime))
             let chordList = extractor!.getResult()
@@ -62,12 +76,12 @@ class AudioCapture {
     }
 
     private func startEngine() {
-        guard !audioEngine.isRunning else {
+        guard !audioEngine!.isRunning else {
             return
         }
 
         do {
-            try audioEngine.start()
+            try audioEngine?.start()
         } catch { }
     }
 }

@@ -18,8 +18,8 @@ class Chordino extends EventTarget {
     this.removeEventListener('stop')
   }
 
-  start(sampleRate, bufferSize) {
-    const args = [sampleRate, bufferSize];
+  start(sampleRate, bufferSize, sensitivity = 0.12) {
+    const args = [sampleRate, bufferSize, sensitivity];
     cordova.exec(
       (data) => {
         this.emit('detection', data)
@@ -45,6 +45,18 @@ class Chordino extends EventTarget {
       "stop",
       []
     );
+  }
+
+  sensitivity(value) {
+    return new Promise((resolve, reject) => {
+      cordova.exec(
+        resolve,
+        reject,
+        this.service,
+        "sensitivity",
+        [value]
+      );
+    })
   }
 }
 
