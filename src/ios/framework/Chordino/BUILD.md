@@ -20,7 +20,7 @@ xcodebuild archive \
     BUILD_LIBRARY_FOR_DISTRIBUTION=YES
 ```
 
-Build for iOS Simulator
+Create xcframework
 ```sh
 xcodebuild -create-xcframework \
     -archive build/archives/Chordino-iOS.xcarchive -framework Chordino.framework \

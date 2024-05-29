@@ -20,7 +20,9 @@ import Chordino
             bufferLength: blocksize as! Int,
             sensitivity: sensitivity as! Double
         )
-        requestPermissionAndRun()
+        commandDelegate.run(inBackground: { [self] in
+            requestPermissionAndRun()
+        })
     }
 
     @objc(stop:)
@@ -45,19 +47,30 @@ import Chordino
     }
 
     private func stopAudioCapture() {
-        audioCapture?.stop()
-        audioCapture = nil
+        commandDelegate.run(inBackground: { [self] in
+            audioCapture?.stop()
+            audioCapture = nil
+        })
     }
 
     private func requestPermissionAndRun() {
-        AVAudioApplication.requestRecordPermission(completionHandler: { granted in
-            if (granted) {
+        switch AVAudioSession.sharedInstance().recordPermission() {
+            case AVAudioSessionRecordPermission.granted:
                 NSLog("Record Permission granted")
-                self.runCapture()
-            } else {
+                runCapture()
+                break
+            case AVAudioSessionRecordPermission.denied:
                 NSLog("Record Permission denied")
-            }
-        })
+            case AVAudioSessionRecordPermission.undetermined:
+                AVAudioSession.sharedInstance().requestRecordPermission({ (granted) in
+                    if granted {
+                        NSLog("Record Permission granted")
+                        self.runCapture()
+                    } else {
+                        NSLog("Record Permission denied")
+                    }
+                })
+        }
     }
 
     private func runCapture() {
