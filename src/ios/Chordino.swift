@@ -54,14 +54,14 @@ import Chordino
     }
 
     private func requestPermissionAndRun() {
-        switch AVAudioSession.sharedInstance().recordPermission() {
-            case AVAudioSessionRecordPermission.granted:
+        switch AVAudioSession.sharedInstance().recordPermission {
+            case .granted:
                 NSLog("Record Permission granted")
                 runCapture()
                 break
-            case AVAudioSessionRecordPermission.denied:
+            case .denied:
                 NSLog("Record Permission denied")
-            case AVAudioSessionRecordPermission.undetermined:
+            case .undetermined:
                 AVAudioSession.sharedInstance().requestRecordPermission({ (granted) in
                     if granted {
                         NSLog("Record Permission granted")

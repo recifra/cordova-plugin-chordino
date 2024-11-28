@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-chordino",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Detect chord from microphone",
   "main": "index.js",
   "scripts": {

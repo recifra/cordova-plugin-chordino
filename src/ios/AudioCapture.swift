@@ -28,7 +28,7 @@ class AudioCapture {
         }
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            try audioSession.setCategory(AVAudioSessionCategoryPlayAndRecord, with: .mixWithOthers)
+            try audioSession.setCategory(AVAudioSession.Category.playAndRecord, options: .mixWithOthers)
             try audioSession.setActive(true)
         } catch let error as NSError {
             NSLog("AudioSession Error: %@", [error.localizedDescription])
